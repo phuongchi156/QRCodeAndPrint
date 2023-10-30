@@ -1,0 +1,170 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+
+}
+
+<link rel="stylesheet" type="text/css" media="screen" href="your-app-core.css">
+<link rel="stylesheet" type="text/css" media="print" href="your-app-core-print.css">
+
+@* <div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+
+    <button type="button" id="btn-print-barcode" class="btn btn-primary">Print</button>
+    <button type="button" id="printButton" class="btn btn-primary">Print 2</button>
+
+    <div class="col-sm-6 col-6">
+        <div class="justify-content-center">
+            <img src="/image.png" id="image-barcode" />
+            <img src="@ViewBag.QrCodeUri" />
+        </div>
+    </div>
+</div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+
+    // $("#printButton").click(function (data) {
+    //     saveFile();
+    // });
+
+    $(document).ready(function () {
+
+        $("#btn-print-barcode").click(function () {
+            let url = '@Url.Action("PrintCode","Home")';
+            $.ajax({
+                url: url,
+                success: function (data) {
+                    printBarCode(data);
+                }
+            });
+        });
+
+
+    });
+
+    // function saveFile() { 
+    //     var canvas = html2canvas($("#yourDiv");
+    //     var img = canvas.toDataUrl("D:\test\QRCodePj\QRCodePj\wwwroot\image.png");
+    //     doc = new jsPDF("px", "a4");
+    //     doc.addImage(img, "png", 50, 50);
+    //     doc.save("demo.pdf");
+    // }
+
+
+    function printBarCode(html) {
+        var framePrint = document.createElement("iframe");
+        framePrint.name = "print-barcode";
+        framePrint.style.position = "absolute";
+        framePrint.style.top = "-1000000000px";
+        document.body.appendChild(framePrint);
+        var frameDoc = framePrint.contentWindow ? framePrint.contentWindow : framePrint.contentDocument.document ? framePrint.contentDocument.document : framePrint.contentDocument;
+        frameDoc.document.open();
+        frameDoc.document.write(html);
+        frameDoc.document.close();
+
+        setTimeout(function () {
+            window.frames["print-barcode"].focus();
+            window.frames["print-barcode"].print();
+            document.body.removeChild(framePrint);
+
+        }, 200);
+
+        return true;
+    }
+</script> *@
+
+<div style="text-align:left">
+    <div id="card" style="width: 250px; height:200px; border-radius: 10px; background-color:antiquewhite;">
+        xin chào
+        <img src="https://play-lh.googleusercontent.com/RRQcnzvZTQuXyDmhTEonTAePeI_NpWU3uJQSkzFumg7UBVhNd7-6kCFYqvaFGI34iw" style="width: 150px; height:150px;"  />
+    </div>
+    <hr />
+    <label class="checkbox">
+        <input type="checkbox" id="useDefaultPrinter" /> <strong>Print to Default printer</strong>
+    </label>
+    <p>or...</p>
+    <div id="installedPrinters">
+        <label for="installedPrinterName">Select an installed Printer:</label>
+        <select name="installedPrinterName" id="installedPrinterName"></select>
+    </div>
+    <br /><br />
+    <button type="button" onclick="print();">Print Now...</button>
+</div>
+
+<script>
+
+    //WebSocket settings
+    
+    JSPM.JSPrintManager.auto_reconnect = true;
+    JSPM.JSPrintManager.start();
+    JSPM.JSPrintManager.WS.onStatusChanged = function () {
+        if (jspmWSStatus()) {
+            //get client installed printers
+            JSPM.JSPrintManager.getPrinters().then(function (myPrinters) {
+                var options = '';
+                for (var i = 0; i < myPrinters.length; i++) {
+                    options += '<option>' + myPrinters[i] + '</option>';
+                }
+                $('#installedPrinterName').html(options);
+            });
+        }
+    };
+
+    //Check JSPM WebSocket status
+    function jspmWSStatus() {
+        if (JSPM.JSPrintManager.websocket_status == JSPM.WSStatus.Open)
+            return true;
+        else if (JSPM.JSPrintManager.websocket_status == JSPM.WSStatus.Closed) {
+            alert('JSPrintManager (JSPM) is not installed or not running! Download JSPM Client App from https://neodynamic.com/downloads/jspm');
+            return false;
+        }
+        else if (JSPM.JSPrintManager.websocket_status == JSPM.WSStatus.Blocked) {
+            alert('JSPM has blocked this website!');
+            return false;
+        }
+    }
+
+    //Do printing...
+    function print(o) {
+        console.log("in");
+        if (jspmWSStatus()) {
+            //generate an image of HTML content through html2canvas utility
+            html2canvas(document.getElementById('card'), { scale: 5 }).then(function (canvas) {
+
+                //Create a ClientPrintJob
+                console.log("in2");
+                var cpj = new JSPM.ClientPrintJob();
+                //Set Printer type (Refer to the help, there many of them!)
+                if ($('#useDefaultPrinter').prop('checked')) {
+                    cpj.clientPrinter = new JSPM.DefaultPrinter();
+                } else {
+                    cpj.clientPrinter = new JSPM.InstalledPrinter($('#installedPrinterName').val());
+                }
+                //Set content to print...
+                var b64Prefix = "data:image/png;base64,";
+                var imgBase64DataUri = canvas.toDataURL("image/png");
+                var imgBase64Content = imgBase64DataUri.substring(b64Prefix.length, imgBase64DataUri.length);
+
+                var myImageFile = new JSPM.PrintFile(imgBase64Content, JSPM.FileSourceType.Base64, 'myFileToPrint.png', 1);
+                //add file to print job
+                cpj.files.push(myImageFile);
+
+                //Send print job to printer!
+                cpj.sendToClient();
+
+
+            });
+        }
+    }
+
+</script>
+
+<script src="~/js/JSPrintManager.js"></script>
+<script src="JSPrintManager.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bluebird/3.3.5/bluebird.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
